@@ -1,9 +1,11 @@
 from main import app
-from flask import render_template, request, send_file, redirect, url_for, session
+from flask import render_template, request, send_file, redirect, url_for, render_template_string, session
 import re
 import tempfile
 import os
 import fitz  #
+import io
+from docx import Document
 
 # Habilita sessão para guardar dados temporários
 app.secret_key = "segredo-muito-seguro"
@@ -73,93 +75,135 @@ def aplicar_tarjas():
     return send_file(temp_file.name, as_attachment=True, download_name="arquivo_tarjado.txt")
 
 
-
-@app.route("/upload_pdf", methods=["GET", "POST"])
-def upload_pdf():
-    if request.method == "POST":
-        if "arquivo_pdf" not in request.files:
-            return "Erro: arquivo não enviado na requisição", 400
-        
-        arquivo = request.files["arquivo_pdf"]
-
-        if arquivo.filename == "":
-            return "Erro: nome do arquivo vazio", 400
-        
-        file_bytes = arquivo.read()
-
-        try:
-            doc = fitz.open(stream=file_bytes, filetype="pdf")
-        except Exception as e:
-            return f"Erro ao abrir PDF: {e}", 400
-        
-        texto_total = ""
-        ocorrencias = []
-
-        for page in doc:
-            texto_pagina = page.get_text()
-            texto_total += texto_pagina + "\n--- Página {} ---\n".format(page.number + 1)
-            for tipo, regex in padroes.items():
-                for m in re.finditer(regex, texto_pagina, re.IGNORECASE):
-                    ocorrencias.append({
-                        "page": page.number,
-                        "tipo": tipo,
-                        "texto": m.group(),
-                        "start": m.start(),
-                        "end": m.end(),
-                        "id": f"{page.number}_{m.start()}_{m.end()}"
-                    })
-        session["pdf_bytes"] = file_bytes
-        session["pdf_ocorrencias"] = ocorrencias
-        session["pdf_texto"] = texto_total
-        
-        return redirect(url_for("preview_pdf"))
-
-    return render_template("upload_pdf.html")
+HTML_FORM = """
+<!doctype html>
+<title>Tarjar Informações Sensíveis</title>
+<h2>Envie um arquivo .docx e escolha quais dados deseja tarjar:</h2>
+<form method="post" enctype="multipart/form-data">
+  <input type="file" name="docxfile" accept=".docx" required><br><br>
+  {% for chave in padroes %}
+    <label><input type="checkbox" name="itens" value="{{ chave }}" checked> {{ chave }}</label><br>
+  {% endfor %}
+  <br>
+  <button type="submit">Enviar e Tarjar</button>
+</form>
+"""
 
 
-@app.route("/preview_pdf", methods=["GET"])
-def preview_pdf():
-    texto_pdf = session.get("pdf_texto", "")
-    ocorrencias_pdf = session.get("pdf_ocorrencias", [])
-    if not texto_pdf or not ocorrencias_pdf:
-        return redirect(url_for("upload_pdf"))
+PADROES_SENSIVEIS = {
+    "CPF": r'\b\d{3}\.\d{3}\.\d{3}-\d{2}\b',
+    "RG": r'\b\d{1,2}\.?\d{3}\.?\d{3}-?\d{1}\b',
+    "EMAIL": r'\b[\w\.-]+@[\w\.-]+\.\w{2,}\b',
+    "TELEFONE": r'\(?\d{2}\)?\s?\d{4,5}-\d{4}',
+    "CEP": r'\b\d{5}-\d{3}\b',
+    "CNPJ": r'\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b',
+    "CARTAO": r'(?:\d[ -]*?){13,16}',
+    "PLACA": r'\b[A-Z]{3}-?\d{1}[A-Z0-9]{1}\d{2}\b',
+    "DATA": r'\b\d{2}/\d{2}/\d{4}\b'
+}
 
-    return render_template("preview_pdf.html", texto_pdf=texto_pdf, ocorrencias_pdf=ocorrencias_pdf)
+def copiar_e_tarjar(original_doc, padroes):
+    novo_doc = Document()
+
+    for par in original_doc.paragraphs:
+        texto = par.text
+        for nome, regex in padroes.items():
+            texto = re.sub(regex, lambda m: "█" * len(m.group()), texto)
+
+        # Adiciona o parágrafo com texto tarjado ao novo doc
+        novo_doc.add_paragraph(texto)
+
+    return novo_doc
+
+@app.route('/tarjar_docx', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        arquivo = request.files['docxfile']
+        selecionados = request.form.getlist("itens")
+
+        if not arquivo or not arquivo.filename.endswith('.docx'):
+            return "Arquivo inválido. Envie um .docx.", 400
+
+        padroes_ativos = {k: v for k, v in PADROES_SENSIVEIS.items() if k in selecionados}
+
+        original_doc = Document(arquivo)
+        novo_doc = copiar_e_tarjar(original_doc, padroes_ativos)
+
+        mem_file = io.BytesIO()
+        novo_doc.save(mem_file)
+        mem_file.seek(0)
+
+        return send_file(
+            mem_file,
+            as_attachment=True,
+            download_name="documento_tarjado.docx",
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+
+    return render_template_string(HTML_FORM, padroes=PADROES_SENSIVEIS.keys())
 
 
 
-@app.route("/aplicar_tarjas_pdf", methods=["POST"])
-def aplicar_tarjas_pdf():
-    pdf_bytes = session.get("pdf_bytes")
-    ocorrencias = session.get("pdf_ocorrencias", [])
 
-    if not pdf_bytes or not ocorrencias:
-        return redirect(url_for("upload_pdf"))
+HTML_FORM = """
+<!doctype html>
+<title>Tarjar PDF com Segurança</title>
+<h2>Envie um PDF e escolha o que deseja ocultar com tarja segura:</h2>
+<form method="post" enctype="multipart/form-data">
+  <input type="file" name="pdffile" accept=".pdf" required><br><br>
+  {% for chave in padroes %}
+    <label><input type="checkbox" name="itens" value="{{ chave }}" checked> {{ chave }}</label><br>
+  {% endfor %}
+  <br>
+  <button type="submit">Enviar e Tarjar</button>
+</form>
+"""
 
-    selecionados = request.form.getlist("selecionados")
+# Função principal com redactions reais
+def aplicar_tarjas_em_pdf(doc, padroes):
+    for pagina in doc:
+        texto = pagina.get_text("text")
+        for nome, regex in padroes.items():
+            for match in re.finditer(regex, texto):
+                termo = match.group()
+                areas = pagina.search_for(termo)
+                for area in areas:
+                    # Marca para redigir com preenchimento preto
+                    pagina.add_redact_annot(area, fill=(0, 0, 0))
+        # Aplica redactions: remove texto original e coloca tarja
+        pagina.apply_redactions()
+    return doc
 
-    try:
-        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    except Exception as e:
-        return f"Erro ao abrir PDF na aplicação das tarjas: {e}"
+@app.route('/tarjar_pdf', methods=['GET', 'POST'])
+def pdf():
+    if request.method == 'POST':
+        arquivo = request.files['pdffile']
+        selecionados = request.form.getlist("itens")
 
-    for item in ocorrencias:
-        id_ocorrencia = item["id"]
-        if id_ocorrencia in selecionados:
-            page_num = item["page"]
-            texto_encontrado = item["texto"]
-            page = doc[page_num]
-            areas = page.search_for(texto_encontrado)
-            for area in areas:
-                page.add_redact_annot(area, fill=(0, 0, 0))
+        if not arquivo or not arquivo.filename.endswith('.pdf'):
+            return "Arquivo inválido. Envie um .pdf.", 400
 
-    for page in doc:
-        page.apply_redactions()
+        padroes_ativos = {k: v for k, v in PADROES_SENSIVEIS.items() if k in selecionados}
 
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix="_tarjado.pdf")
-    doc.save(temp_file.name)
-    doc.close()
+        # Abre PDF da memória
+        pdf_bytes = arquivo.read()
+        doc = fitz.open("pdf", pdf_bytes)
 
-    return send_file(temp_file.name, as_attachment=True, download_name="arquivo_tarjado.pdf")
+        # Aplica tarjas reais
+        aplicar_tarjas_em_pdf(doc, padroes_ativos)
 
+        # Salva novo PDF na memória
+        mem_file = io.BytesIO()
+        doc.save(mem_file)
+        mem_file.seek(0)
+        doc.close()
+
+        return send_file(
+            mem_file,
+            as_attachment=True,
+            download_name="documento_tarjado.pdf",
+            mimetype="application/pdf"
+        )
+
+    return render_template_string(HTML_FORM, padroes=PADROES_SENSIVEIS.keys())
 
