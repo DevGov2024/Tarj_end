@@ -14,7 +14,7 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <link rel="stylesheet" href="./static/style.css">
+    <link rel="stylesheet" href="../static/Css/style.css">
 </head>
 
 <body>
@@ -24,12 +24,12 @@
         <nav class="navbar navbar-expand-lg">
             <div class="container">
                 <a class="navbar-brand" href="index.html">
-                    <img src="../img/brasao-sp.png" alt="Logo da Prefeitura" style="width: 400px;">
+                   <img src="{{ url_for('static', filename='img/brasao-sp.png') }}" alt="Logo da Prefeitura" style="width: 150px;">
                     <span>Ferramenta de Tarjamento</span>
                 </a>
 
                 <div class="d-flex align-items-center">
-                    <a href="formulario.html" class="nav-link me-3">Histórico de Envios</a>
+                    <a href="./formulario.html" class="nav-link me-3">Histórico de Envios</a>
                     <a href="#" class="btn btn-primary">Acessar / Login</a>
                 </div>
             </div>
@@ -59,26 +59,29 @@
 
         <section class="tools-section">
             <div class="row g-4">
-
-                <div class="col-lg-4 col-md-6">
+ 
+ <div class="col-lg-4 col-md-6">
+    <a href="/tarjar_pdf"  class="text-decoration-none text-dark">
   <div class="tool-card">
     <div class="icon-container">
       <i class="bi bi-cloud-upload-fill"></i>
     </div>
     <h2>Enviar Documento em PDF</h2>
     <p>Faça o upload de arquivos em PDF para tarjar.</p>
-    <a href="/tarjar_pdf" class="btn btn-danger mt-2">Começar</a>
+     </a>
   </div>
-</div>
 
+</div>
+ 
 <div class="col-lg-4 col-md-6">
+     <a href="./tarjar" class="text-decoration-none text-dark">
   <div class="tool-card">
     <div class="icon-container">
       <i class="bi bi-search"></i>
     </div>
     <h2>Enviar Documento em DOCX</h2>
     <p>Faça o upload de novos arquivos DOCX para tarjar.</p>
-    <a href="./tarjar" class="btn btn-primary mt-2">Começar</a>
+   </a>
   </div>
 </div>
 
@@ -104,9 +107,78 @@
         </section>
     </main>
 
-    <footer class="text-center py-4">
-        <p>&copy; 2025 Prefeitura de São Paulo. Todos os direitos reservados.</p>
-    </footer>
+    <footer class="shadow-lg pt-5 fs-6 footer-font   ">
+    <div class="container  ">
+        <div class="row">
+            <div class="col-lg-2  col-3 mb-2">
+                <a href="https://www.prefeitura.sp.gov.br/cidade/secretarias/gestao/">
+
+                <img src="{{ url_for('static', filename='img/logo_PrefSP_sem fundo_horizontal_fundo claro.png') }}"class="img-fluid"   style="max-width: 300px; width: 180%; height: 90px; object-fit: cover; object-position: center;">
+            
+            </a>
+            </div>
+            <div class="col-lg-1 col-0 col-md-0  mx-auto"></div>
+            <div class="col-lg-6 col-12 footer-font">
+                <ul class="list-unstyled text-justify">
+                    <li class="fw-bold text-start">STGC - Sistema de Tarjamento da Gestão/COTIC</li>
+                    <li class="mb-2 text-start">Você pode contatar o STGC<a
+                            href="" target="_blank"></a> através do e-mail de suporte da COTIC:  <a
+                            href="mailto: ssi@prefeitura.sp.gov.br">ssi@prefeitura.sp.gov.br</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-0 col-1"></div>
+            <div class="col-lg-2 col-12">
+                <ul class="  list-group  list-group-horizontal ">
+                    <li class="d-flex align-items-center mb-2">
+                        <a href="https://www.facebook.com/gestaoprefsp/" target="_blank">
+                             <img src="{{ url_for('static', filename='img/facebook.png') }}"  href="https://open.spotify.com/show/7k40YvPejELy045znwj0Er?si=a718ff29e31a4cf8&utm_medium=share&utm_source=linktree"
+                                target="_blank" style="max-width: 40px;">
+                        </a>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                        <a href="https://open.spotify.com/show/7k40YvPejELy045znwj0Er?si=a718ff29e31a4cf8&utm_medium=share&utm_source=linktree"
+                            target="_blank">
+                            <img src="{{ url_for('static', filename='img/spotify-logo.png') }}"
+                                href="https://open.spotify.com/show/7k40YvPejELy045znwj0Er?si=a718ff29e31a4cf8&utm_medium=share&utm_source=linktree"
+                                target="_blank" style="max-width: 40px;">
+ 
+                        </a>
+                    <li class="d-flex align-items-center mb-2">
+                        <a href="https://www.linkedin.com/company/segessp/" target="_blank">
+                           <img src="{{ url_for('static', filename='img/linkedin-logo.png') }}"
+                                href="https://www.facebook.com/gestaoprefsp/" target="_blank" style="max-width: 40px;">
+                        </a>
+                    </li>
+                </ul>
+                <ul class="list-group list-group-horizontal">
+                    <li class="d-flex align-items-center mb-2 ">
+                        <a href="https://www.youtube.com/channel/UCsWU48a61IT4Yh2ZAI06kjw" target="_blank">
+                           <img src="{{ url_for('static', filename='img/youtube.png') }}"
+                                href="https://www.youtube.com/@gestaoprefsp" target="_blank" style="max-width: 40px;">
+                        </a>
+                    </li>
+                    <li class="d-flex align-items-center mb-2 px-1">
+                        <a href="https://www.instagram.com/gestaoprefsp/" target="_blank">
+                          <img src="{{ url_for('static', filename='img/instagram.png') }}"
+                                href="https://www.instagram.com/gestaoprefsp/" target="_blank"
+                                style="max-width: 40px;">
+                        </a>
+                    </li>
+                    <li class="d-flex align-items-center mb-2 px-1">
+                        <a href="https://www.tiktok.com/@prefsp?lang=en" target="_blank">
+                            <img src="{{ url_for('static', filename='img/tiktok.png') }}"
+                                href="https://www.tiktok.com/@prefsp?lang=en" target="_blank"
+                                style="max-width: 60px;">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="text-center footer-font mt-5" style="background-color: #F8F9FA; padding: 15px; color: #737373;">
+        Copyright © Prefeitura de São Paulo - SEGES/COTIC 2025
+    </div>
+</footer>
 
 </body>
 
