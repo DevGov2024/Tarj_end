@@ -25,6 +25,7 @@ padroes = {
     "Cartão de Crédito": r"\b(?:\d[ -]*?){13,16}\b",
     "RG": r"\b\d{2}\.\d{3}\.\d{3}-\d{1}\b",
     "Passaporte": r"\b[A-Z]{1}\d{7}\b",
+    "endereço" : r"(\d+)\s+([A-Za-z\s]+),\s*([A-Za-z\s]+)(?:,\s*(.*))?"
 }
 
 
@@ -129,7 +130,10 @@ PADROES_SENSIVEIS_PDF = {
     "CNPJ": r'\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b',
     "CARTAO": r'(?:\d[ -]*?){13,16}',
     "PLACA": r'\b[A-Z]{3}-?\d{1}[A-Z0-9]{1}\d{2}\b',
-    "DATA": r'\b\d{2}/\d{2}/\d{4}\b'
+    "DATA": r'\b\d{2}/\d{2}/\d{4}\b',
+    "CEP": r"\b\d{5}-\d{3}\b",
+   "endereço": r"\b(?:Rua|Av|Avenida|Travessa|Estrada|Rodovia|R\.|Av\.?)\.?\s+[A-Za-zÀ-ÖØ-öø-ÿ0-9\s]+,\s*\d+"
+   
 }
 
 def aplicar_tarjas_em_pdf(doc, padroes):
