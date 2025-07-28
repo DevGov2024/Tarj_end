@@ -25,8 +25,10 @@
             <div class="container">
                 <a class="navbar-brand" href="index.html">
                    <img src="{{ url_for('static', filename='img/brasao-sp.png') }}" alt="Logo da Prefeitura" style="width: 150px;">
-                    <span>Ferramenta de Tarjamento</span>
+                  
                 </a>
+
+                  <h1><strong> Ferramenta de Tarjamento</strong></h1>
 
                 <div class="d-flex align-items-center">
                     <a href="./formulario.html" class="nav-link me-3">Histórico de Envios</a>
@@ -84,21 +86,16 @@
    </a>
   </div>
 </div>
-
                 <div class="col-lg-4 col-md-6">
+                  <a href="./tarjar_txt" class="text-decoration-none text-dark">
+                
                     <div class="tool-card">
                         <div class="icon-container">
                             <i class="bi bi-patch-check-fill"></i>
                         </div>
                         <h2>Enviar Documento em TXT</h2>
                         <p>Faça o upload de novos arquivos TXT para tarjar.</p>
-                        <form method="POST" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <input type="file" name="arquivo" accept=".txt" class="form-control" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Enviar e Tarjar</button>
-
-                        </form>
+                       </a>
                     </div>
                 </div>
 

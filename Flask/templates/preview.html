@@ -5,23 +5,16 @@
   <title>Pré-visualização</title>
 </head>
 <body>
-  <h1>Pré-visualização do conteúdo</h1>
+ <h2>Visualizar conteúdo</h2>
+<pre>{{ conteudo }}</pre>
 
-  <h2>Texto original:</h2>
-  <pre style="background:#eee; padding:10px; border:1px solid #ccc; white-space:pre-wrap;">
-{{ conteudo }}
-  </pre>
-
-  <h2>Informações detectadas:</h2>
-  <form method="POST" action="{{ url_for('aplicar_tarjas') }}">
-    {% for item in ocorrencias %}
-      <div>
-        <input type="checkbox" name="selecionados" value="{{ item.id }}" checked>
-        <strong>[{{ item.tipo }}]</strong> {{ item.texto }}
-      </div>
+<form method="POST" action="/tarjar_txt_final">
+    {% for padrao in padroes %}
+        <label><input type="checkbox" name="itens" value="{{ padrao }}">{{ padrao }}</label><br>
     {% endfor %}
-    <br>
-    <button type="submit">Aplicar Tarjas e Baixar</button>
-  </form>
+    <input type="hidden" name="conteudo" value="{{ conteudo | tojson | safe }}">
+    <button type="submit">Tarjar e Baixar</button>
+</form>
+
 </body>
 </html>

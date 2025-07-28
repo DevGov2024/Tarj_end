@@ -6,6 +6,10 @@ import os
 import fitz  #
 from docx import Document
 import io
+from historico_utils import salvar_envio
+
+
+
 
 # Habilita sessão para guardar dados temporários
 app.secret_key = "segredo-muito-seguro"
@@ -24,55 +28,41 @@ padroes = {
 }
 
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/",  methods=["GET", "POST"])
 def homepage():
-    if request.method == "POST":
-        arquivo = request.files["arquivo"]
-        conteudo = arquivo.read().decode("utf-8")
+    
+     return render_template("index.html")
+    
+@app.route("/tarjar_txt", methods=["GET", "POST"])   
+def txt():
+    if request.method == 'POST':
+        arquivo = request.files['txtfile']
+        selecionados = request.form.getlist("itens")
 
-        ocorrencias = []
-        for tipo, regex in padroes.items():
-            for m in re.finditer(regex, conteudo):
-                ocorrencias.append({
-                    "tipo": tipo,
-                    "texto": m.group(),
-                    "start": m.start(),
-                    "end": m.end(),
-                    "id": f"{m.start()}_{m.end()}"  
-                })
+        if not arquivo or not arquivo.filename.endswith('.txt'):
+            return "Arquivo inválido. Envie um .txt.", 400
 
-        # Armazenar dados na sessão
-        session["conteudo"] = conteudo
-        session["ocorrencias"] = ocorrencias
+        padroes_ativos = {k: v for k, v in PADROES_SENSIVEIS.items() if k in selecionados}
+        conteudo = arquivo.read().decode('utf-8')
 
-        return render_template("preview.html", conteudo=conteudo, ocorrencias=ocorrencias)
+        for nome, padrao in padroes_ativos.items():
+            conteudo = re.sub(padrao, '[TARJADO]', conteudo)
 
-    return render_template("index.html")
+        mem_file = io.BytesIO()
+        mem_file.write(conteudo.encode('utf-8'))
+        mem_file.seek(0)
+
+        return send_file(
+            mem_file,
+            as_attachment=True,
+            download_name="documento_tarjado.txt",
+            mimetype="text/plain"
+        )
+
+    return render_template("tarjar_txt.html", padroes=PADROES_SENSIVEIS.keys())
 
 
-@app.route("/aplicar", methods=["POST"])
-def aplicar_tarjas():
-    conteudo = session.get("conteudo", "")
-    ocorrencias = session.get("ocorrencias", [])
 
-    selecionados = request.form.getlist("selecionados")
-
-    # Aplicar as tarjas manualmente com controle de deslocamento
-    deslocamento = 0
-    for item in ocorrencias:
-        if f"{item['start']}_{item['end']}" in selecionados:
-            inicio = item["start"] + deslocamento
-            fim = item["end"] + deslocamento
-            substituto = f"[TARJADO-{item['tipo']}]"
-            conteudo = conteudo[:inicio] + substituto + conteudo[fim:]
-            deslocamento += len(substituto) - (fim - inicio)
-
-    # Criar arquivo temporário
-    temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w+", encoding="utf-8", suffix="_tarjado.txt")
-    temp_file.write(conteudo)
-    temp_file.close()
-
-    return send_file(temp_file.name, as_attachment=True, download_name="arquivo_tarjado.txt") 
 
 
 def copiar_e_tarjar(original_doc, padroes):
@@ -184,5 +174,13 @@ def tarjar_pdf():
 
     return render_template("tarjar_pdf.html", padroes=PADROES_SENSIVEIS_PDF.keys())
 
+salvar_envio("documento_tarjado.pdf", "PDF")
 
 
+
+from historico_utils import carregar_historico
+
+@app.route("/historico")
+def ver_historico():
+    historico = carregar_historico()
+    return render_template("historico.html", historico=historico)
